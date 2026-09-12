@@ -1,0 +1,10 @@
+pkgname=examplepkg
+pkgver=1.2
+pkgrel=1
+pkgdesc='Marker package: /etc/examplepkg says which ring built it (edge)'
+arch=('any')
+license=('MIT')
+options=('!debug')
+package() {
+  install -Dm644 /dev/stdin "$pkgdir/etc/examplepkg" <<< "edge"
+}

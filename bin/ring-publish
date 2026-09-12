@@ -1,0 +1,14 @@
+#!/bin/bash
+# Usage: bin/ring-publish RING
+# Regenerates the signed pacman database for a ring from its pinned list
+# (/tmp/opr-poc1/rings/RING.txt: one package filename per line). Packages are never
+# copied: the database is written next to them in the pool.
+set -euo pipefail
+ring=$1
+here=$(cd "$(dirname "$0")/.." && pwd)
+pool=${POOL:-/tmp/opr-poc1/repo}/x86_64
+export GNUPGHOME=/tmp/opr-poc1/gnupg
+db=$pool/omarchy-$ring.db.tar.gz
+rm -f "$db" "${db%.tar.gz}" "$db.sig" "${db%.db.tar.gz}".files*
+mapfile -t pkgs < <(sed "s|^|$pool/|" "/tmp/opr-poc1/rings/$ring.txt")
+repo-add --sign --key poc@omarchy.org "$db" "${pkgs[@]}" >/dev/null
