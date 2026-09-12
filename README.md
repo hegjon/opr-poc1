@@ -173,8 +173,11 @@ $
 ### 6. Three clients, one Server URL, three answers
 
 `bin/fakeroot-pacman RING` runs pacman with `config/pacman-RING.conf` against
-a throwaway root. The three configs differ only in the repo name; all point
-at `Server = file:///tmp/opr-poc1/repo/$arch`, no web server needed.
+a throwaway root. The three configs,
+[pacman-stable.conf](config/pacman-stable.conf),
+[pacman-rc.conf](config/pacman-rc.conf) and
+[pacman-edge.conf](config/pacman-edge.conf), differ only in the repo name;
+all point at `Server = file:///tmp/opr-poc1/repo/$arch`.
 
 **stable**
 
