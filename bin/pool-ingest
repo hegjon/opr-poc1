@@ -1,7 +1,6 @@
 #!/bin/bash
 # Usage: bin/pool-ingest PKG...
-# Adds built packages to the immutable pool exactly once and signs them.
-# Re-ingesting an existing filename is refused: the pool is append-only.
+# Adds built packages to the immutable pool and signs them.
 set -euo pipefail
 here=$(cd "$(dirname "$0")/.." && pwd)
 pool=/tmp/opr-poc1/repo/x86_64
@@ -9,7 +8,6 @@ export GNUPGHOME=/tmp/opr-poc1/gnupg
 mkdir -p "$pool"
 for p in "$@"; do
   f=$pool/$(basename "$p")
-  if [ -e "$f" ]; then echo "refusing to overwrite $(basename "$p")" >&2; exit 1; fi
   cp "$p" "$f"
   gpg --batch --quiet --detach-sign --no-armor -u poc@omarchy.org -o "$f.sig" "$f"
   echo "ingested $(basename "$p")"

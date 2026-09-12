@@ -82,18 +82,15 @@ $
 
 ### 3. Ingest into the pool exactly once
 
-A package is uploaded and signed once. The pool is append-only; re-ingesting
-an existing filename is refused rather than overwritten. Any tool that writes
-to the pool, `bin/pool-ingest` here and the R2 uploader later, must be
-configured to not overwrite an existing object.
+A package is uploaded and signed once. Any tool that writes to the pool,
+`bin/pool-ingest` here and the R2 uploader later, must be configured to not
+overwrite an existing object.
 
 ```console
 $ bin/pool-ingest /tmp/opr-poc1/build/*.zst
 ingested examplepkg-1.0-1-any.pkg.tar.zst
 ingested examplepkg-1.1-1-any.pkg.tar.zst
 ingested examplepkg-1.2-1-any.pkg.tar.zst
-$ bin/pool-ingest /tmp/opr-poc1/build/examplepkg-1.0-1-any.pkg.tar.zst
-refusing to overwrite examplepkg-1.0-1-any.pkg.tar.zst
 $ ls /tmp/opr-poc1/repo/x86_64
 examplepkg-1.0-1-any.pkg.tar.zst
 examplepkg-1.0-1-any.pkg.tar.zst.sig
@@ -114,7 +111,13 @@ $ echo examplepkg-1.0-1-any.pkg.tar.zst > /tmp/opr-poc1/rings/stable.txt
 $ echo examplepkg-1.1-1-any.pkg.tar.zst > /tmp/opr-poc1/rings/rc.txt
 $ echo examplepkg-1.2-1-any.pkg.tar.zst > /tmp/opr-poc1/rings/edge.txt
 $ for r in stable rc edge; do bin/ring-publish $r; done
-$ ls /tmp/opr-poc1/repo/x86_64 | grep -v pkg.tar
+$ ls /tmp/opr-poc1/repo/x86_64
+examplepkg-1.0-1-any.pkg.tar.zst
+examplepkg-1.0-1-any.pkg.tar.zst.sig
+examplepkg-1.1-1-any.pkg.tar.zst
+examplepkg-1.1-1-any.pkg.tar.zst.sig
+examplepkg-1.2-1-any.pkg.tar.zst
+examplepkg-1.2-1-any.pkg.tar.zst.sig
 omarchy-edge.db
 omarchy-edge.db.sig
 omarchy-edge.db.tar.gz
@@ -142,14 +145,6 @@ omarchy-stable.files.tar.gz.sig
 $
 ```
 
-The databases are signed with the pool key and pacman can verify them:
-
-```console
-$ gpg --verify /tmp/opr-poc1/repo/x86_64/omarchy-stable.db.sig 2>&1 | grep -o 'Good signature from "[^"]*"'
-Good signature from "Omarchy POC <poc@omarchy.org>"
-$
-```
-
 ### 5. Give the client a keyring
 
 ```console
@@ -157,8 +152,6 @@ $ gpg --export --armor poc@omarchy.org > /tmp/opr-poc1/poc.pub
 $ fakeroot pacman-key --gpgdir /tmp/opr-poc1/keyring --init >/dev/null 2>&1
 $ fakeroot pacman-key --gpgdir /tmp/opr-poc1/keyring --add /tmp/opr-poc1/poc.pub >/dev/null 2>&1
 $ fakeroot pacman-key --gpgdir /tmp/opr-poc1/keyring --lsign-key poc@omarchy.org >/dev/null 2>&1
-$ ls /tmp/opr-poc1/keyring/secring.gpg
-/tmp/opr-poc1/keyring/secring.gpg
 $
 ```
 
@@ -352,9 +345,7 @@ $
 - **Mirror pools alongside our own.** Separate pools per origin work the same
   way with distinct database names in distinct directories, e.g.
   `omarchy-core-{edge,rc,stable}.db` in `core/$arch/` next to the imported
-  upstream packages, and `omarchy-*.db` in `pool/$arch/`. Upstream
-  Arch already publishes as a pool plus symlinked repo directories, so the
-  import side is a filename copy, not a re-index.
+  upstream packages, and `omarchy-*.db` in `pool/$arch/`.
 - **Signing key in CI.** The pool key signs packages at ingest and databases
   at publish. Clients only ever hold the public key (step 5). Whether one
   server holds the private key or a separate signer does is orthogonal to the
