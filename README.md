@@ -54,10 +54,11 @@ config/pacman-RING.conf        the client config per ring; only the repo name di
 /tmp/opr-poc1/client-RING/     throwaway pacman root per ring
 ```
 
-The tooling is deliberately tiny. `bin/pool-ingest` and `bin/ring-publish`
-are concept scripts that work on local files; the real implementation needs
-the same two operations expressed against the R2 API. `bin/fakeroot-pacman`
-is only a wrapper so that stock pacman can be exercised in a throwaway client
+The tooling is deliberately tiny. [bin/pool-ingest](bin/pool-ingest) and
+[bin/ring-publish](bin/ring-publish) are concept scripts that work on local
+files; the real implementation needs the same two operations expressed
+against the R2 API. [bin/fakeroot-pacman](bin/fakeroot-pacman) is only a
+wrapper so that stock pacman can be exercised in a throwaway client
 environment without root; it is not part of the design.
 
 ```console
@@ -173,11 +174,16 @@ $
 ### 6. Three clients, one Server URL, three answers
 
 `bin/fakeroot-pacman RING` runs pacman with `config/pacman-RING.conf` against
-a throwaway root. The three configs,
-[pacman-stable.conf](config/pacman-stable.conf),
-[pacman-rc.conf](config/pacman-rc.conf) and
-[pacman-edge.conf](config/pacman-edge.conf), differ only in the repo name;
-all point at `Server = file:///tmp/opr-poc1/repo/$arch`.
+a throwaway root. The three configs differ only in the repo name; all point
+at the same pool:
+
+```
+Server = file:///tmp/opr-poc1/repo/$arch
+```
+
+- [pacman-stable.conf](config/pacman-stable.conf)
+- [pacman-rc.conf](config/pacman-rc.conf)
+- [pacman-edge.conf](config/pacman-edge.conf)
 
 **stable**
 
