@@ -5,7 +5,7 @@ where the ring databases (`edge`, `rc`, `stable`) live *beside* the packages.
 No redirect layer, no per-ring directory tree, no copying: a ring is a small
 `.db` file, and promotion is writing a new `.db` file.
 
-The whole walkthrough below is testable/verified. Every `$` line is run and its
+This whole walkthrough is testable and verified. Every `$` line is run and its
 output is compared by [clitest](https://github.com/aureliojargas/clitest):
 
 ```
@@ -14,11 +14,10 @@ clitest README.md
 
 Requirements: `pacman`, `makepkg`, `fakeroot`, `gpg`, `clitest`
 (all on a stock Arch/Omarchy box). Nothing needs root. Everything generated
-lives under `/tmp/opr-poc1/`; the checkout itself stays clean.
+lives under `/tmp/opr-poc1/`; the checkout stays clean.
 
-The final implementation will publish the pool to Cloudflare R2. This POC
-only tests the layout on the local filesystem: the pool is a directory and
-the client reaches it over `file://`, with nothing else different.
+This POC only tests the layout on the local filesystem (`file://`).
+The final implementation will publish the pool to Cloudflare R2.
 
 ## The idea in one pacman.conf entry
 
