@@ -362,6 +362,4 @@ $
   rebuilt package with the same filename can never replace what a ring
   already pins.
 - **Revisions before a larger deploy.** Retention and pruning of the pool
-  are out of scope here and need their own design. Also worth confirming
-  whether `.files` databases are wanted per ring (they double the publish
-  size, still a few MB).
+  are out of scope here and need their own design.
