@@ -1,4 +1,4 @@
-Rings as databases, not directories
+# Rings as databases, not directories
 
 Proof of concept for publishing Omarchy packages from **one immutable pool**
 where the ring databases (`edge`, `rc`, `stable`) live *beside* the packages.
