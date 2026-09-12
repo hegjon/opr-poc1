@@ -172,8 +172,8 @@ at `Server = file:///tmp/opr-poc1/repo/$arch`, no web server needed.
 
 ```console
 $ bin/fakeroot-pacman stable -Sy >/dev/null 2>&1
-$ bin/fakeroot-pacman stable -Sp examplepkg | sed 's|^file://||'
-/tmp/opr-poc1/repo/x86_64/examplepkg-1.0-1-any.pkg.tar.zst
+$ bin/fakeroot-pacman stable -Sp examplepkg
+file:///tmp/opr-poc1/repo/x86_64/examplepkg-1.0-1-any.pkg.tar.zst
 $ bin/fakeroot-pacman stable -S --noconfirm examplepkg >/dev/null 2>&1
 $ cat /tmp/opr-poc1/client-stable/root/etc/examplepkg
 originated from stable, version 1.0
@@ -184,8 +184,8 @@ $
 
 ```console
 $ bin/fakeroot-pacman rc -Sy >/dev/null 2>&1
-$ bin/fakeroot-pacman rc -Sp examplepkg | sed 's|^file://||'
-/tmp/opr-poc1/repo/x86_64/examplepkg-1.1-1-any.pkg.tar.zst
+$ bin/fakeroot-pacman rc -Sp examplepkg
+file:///tmp/opr-poc1/repo/x86_64/examplepkg-1.1-1-any.pkg.tar.zst
 $ bin/fakeroot-pacman rc -S --noconfirm examplepkg >/dev/null 2>&1
 $ cat /tmp/opr-poc1/client-rc/root/etc/examplepkg
 originated from rc, version 1.1
@@ -196,8 +196,8 @@ $
 
 ```console
 $ bin/fakeroot-pacman edge -Sy >/dev/null 2>&1
-$ bin/fakeroot-pacman edge -Sp examplepkg | sed 's|^file://||'
-/tmp/opr-poc1/repo/x86_64/examplepkg-1.2-1-any.pkg.tar.zst
+$ bin/fakeroot-pacman edge -Sp examplepkg
+file:///tmp/opr-poc1/repo/x86_64/examplepkg-1.2-1-any.pkg.tar.zst
 $ bin/fakeroot-pacman edge -S --noconfirm examplepkg >/dev/null 2>&1
 $ cat /tmp/opr-poc1/client-edge/root/etc/examplepkg
 originated from edge, version 1.2
