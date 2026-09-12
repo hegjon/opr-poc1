@@ -39,7 +39,7 @@ a signed database.
 ## Layout
 
 ```
-pkgs/examplepkg-*/PKGBUILD     one marker package, three versions: its only
+pkgs/examplepkg-*/PKGBUILD     one dummy package, three versions: its only
                                file, /etc/examplepkg, names the ring it
                                was built for (stable, rc, edge)
 bin/pool-ingest PKG...         copy built packages into the pool once, sign them
@@ -82,7 +82,7 @@ $ gpg --list-keys --with-colons poc@omarchy.org 2>/dev/null | grep -c '^pub'
 $
 ```
 
-### 2. Build the marker package three times
+### 2. Build the dummy package three times
 
 Each build differs only in the contents of `/etc/examplepkg`.
 
