@@ -4,7 +4,6 @@
 set -euo pipefail
 here=$(cd "$(dirname "$0")/.." && pwd)
 pool=/tmp/opr-poc1/repo/x86_64
-export GNUPGHOME=/tmp/opr-poc1/gnupg
 mkdir -p "$pool"
 for p in "$@"; do
   f=$pool/$(basename "$p")

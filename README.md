@@ -305,10 +305,7 @@ $ bin/fakeroot-pacman stable -Syyu --noconfirm
 $
 ```
 
-(`-Syy` forces a refresh: pacman skips a database whose modification time
-has not changed since the last sync, and a republish within the same second
-can look unchanged. A real publisher should make sure the CDN emits a fresh
-`Last-Modified` or `ETag` per publish.)
+(`-Syy` forces a refresh.)
 
 ### 8. Promote a single package
 
@@ -342,14 +339,6 @@ $
 
 ## Notes on the follow-up questions
 
-- **Mirror pools alongside our own.** Separate pools per origin work the same
-  way with distinct database names in distinct directories, e.g.
-  `omarchy-core-{edge,rc,stable}.db` in `core/$arch/` next to the imported
-  upstream packages, and `omarchy-*.db` in `pool/$arch/`.
-- **Signing key in CI.** The pool key signs packages at ingest and databases
-  at publish. Clients only ever hold the public key (step 5). Whether one
-  server holds the private key or a separate signer does is orthogonal to the
-  layout; the layout does not force either choice.
 - **Per-package promotion.** Supported directly (step 8); a ring list is
   edited one line at a time and republished.
 - **No overwrites in the pool.** The immutability guarantee lives in the
