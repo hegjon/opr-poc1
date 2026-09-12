@@ -1,4 +1,4 @@
-# opr-poc1: rings as databases, not directories
+Rings as databases, not directories
 
 Proof of concept for publishing Omarchy packages from **one immutable pool**
 where the ring databases (`edge`, `rc`, `stable`) live *beside* the packages.
@@ -12,9 +12,8 @@ output is compared by [clitest](https://github.com/aureliojargas/clitest):
 clitest README.md
 ```
 
-Requirements: `pacman`, `makepkg`, `fakeroot`, `gpg`, `clitest`
-(all on a stock Arch/Omarchy box). Nothing needs root. Everything generated
-lives under `/tmp/opr-poc1/`; the checkout stays clean.
+Requirements: `pacman`, `makepkg`, `fakeroot`, `gpg`, `clitest`.
+Nothing needs root. Everything generated lives under `/tmp/opr-poc1/`.
 
 This POC only tests the layout on the local filesystem (`file://`).
 The final implementation will publish the pool to Cloudflare R2.
