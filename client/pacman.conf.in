@@ -1,8 +1,0 @@
-# Rendered by bin/fakeroot-pacman; a real client would ship one of these per ring.
-[options]
-Architecture = x86_64
-SigLevel = Required
-LocalFileSigLevel = Optional
-
-[omarchy-@RING@]
-Server = file://@POOL@/$arch

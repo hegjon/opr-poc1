@@ -16,6 +16,10 @@ Requirements: `pacman`, `makepkg`, `fakeroot`, `gpg`, `clitest`
 (all on a stock Arch/Omarchy box). Nothing needs root. Everything generated
 lives under `/tmp/opr-poc1/`; the checkout itself stays clean.
 
+The final implementation will publish the pool to Cloudflare R2. This POC
+only tests the layout on the local filesystem: the pool is a directory and
+the client reaches it over `file://`, with nothing else different.
+
 ## The idea in one pacman.conf entry
 
 ```
@@ -41,10 +45,10 @@ pkgs/examplepkg-*/PKGBUILD     one marker package, three versions: its only
 bin/pool-ingest PKG...         copy built packages into the pool once, sign them
 bin/ring-publish RING          regenerate the signed db for RING from its list
 bin/fakeroot-pacman RING ...   unprivileged pacman configured for RING
-client/pacman.conf.in          the client config; only the ring name varies
+config/pacman-RING.conf        the client config per ring; only the repo name differs
 /tmp/opr-poc1/build/           makepkg output, before ingest
 /tmp/opr-poc1/rings/           pinned list per ring (the "index")
-/tmp/opr-poc1/repo/            the published pool (override with POOL=...)
+/tmp/opr-poc1/repo/            the published pool
 /tmp/opr-poc1/gnupg/           the signing key (GNUPGHOME for the publisher)
 /tmp/opr-poc1/keyring/         the client keyring, public key only
 /tmp/opr-poc1/client-RING/     throwaway pacman root per ring
@@ -79,7 +83,9 @@ $
 ### 3. Ingest into the pool exactly once
 
 A package is uploaded and signed once. The pool is append-only; re-ingesting
-an existing filename is refused rather than overwritten.
+an existing filename is refused rather than overwritten. Any tool that writes
+to the pool, `bin/pool-ingest` here and the R2 uploader later, must be
+configured to not overwrite an existing object.
 
 ```console
 $ bin/pool-ingest /tmp/opr-poc1/build/*.zst
@@ -146,9 +152,6 @@ $
 
 ### 5. Give the client a keyring
 
-The client keyring holds only the public key, locally signed, exactly like
-`pacman-key --add && pacman-key --lsign-key` on a real machine.
-
 ```console
 $ gpg --export --armor poc@omarchy.org > /tmp/opr-poc1/poc.pub
 $ fakeroot pacman-key --gpgdir /tmp/opr-poc1/keyring --init >/dev/null 2>&1
@@ -159,28 +162,45 @@ $ ls /tmp/opr-poc1/keyring/secring.gpg
 $
 ```
 
-(`secring.gpg` is an empty placeholder that `pacman-key --init` creates; the
-private key never leaves `/tmp/opr-poc1/gnupg`.)
-
 ### 6. Three clients, one Server URL, three answers
 
-`bin/fakeroot-pacman RING` renders `client/pacman.conf.in` with the ring name and the
-pool path (`Server = file:///tmp/opr-poc1/repo/$arch`, no web server needed) and
-runs pacman with `SigLevel = Required` against a throwaway root.
+`bin/fakeroot-pacman RING` runs pacman with `config/pacman-RING.conf` against
+a throwaway root. The three configs differ only in the repo name; all point
+at `Server = file:///tmp/opr-poc1/repo/$arch`, no web server needed.
+
+**stable**
 
 ```console
-$ for r in stable rc edge; do bin/fakeroot-pacman $r -Sy >/dev/null 2>&1; done
+$ bin/fakeroot-pacman stable -Sy >/dev/null 2>&1
 $ bin/fakeroot-pacman stable -Sp examplepkg | sed 's|^file://||'
 /tmp/opr-poc1/repo/x86_64/examplepkg-1.0-1-any.pkg.tar.zst
+$ bin/fakeroot-pacman stable -S --noconfirm examplepkg >/dev/null 2>&1
+$ cat /tmp/opr-poc1/client-stable/root/etc/examplepkg
+originated from stable, version 1.0
+$
+```
+
+**rc**
+
+```console
+$ bin/fakeroot-pacman rc -Sy >/dev/null 2>&1
 $ bin/fakeroot-pacman rc -Sp examplepkg | sed 's|^file://||'
 /tmp/opr-poc1/repo/x86_64/examplepkg-1.1-1-any.pkg.tar.zst
+$ bin/fakeroot-pacman rc -S --noconfirm examplepkg >/dev/null 2>&1
+$ cat /tmp/opr-poc1/client-rc/root/etc/examplepkg
+originated from rc, version 1.1
+$
+```
+
+**edge**
+
+```console
+$ bin/fakeroot-pacman edge -Sy >/dev/null 2>&1
 $ bin/fakeroot-pacman edge -Sp examplepkg | sed 's|^file://||'
 /tmp/opr-poc1/repo/x86_64/examplepkg-1.2-1-any.pkg.tar.zst
-$ for r in stable rc edge; do bin/fakeroot-pacman $r -S --noconfirm examplepkg >/dev/null 2>&1; done
-$ for r in stable rc edge; do printf '%-7s ' $r; cat /tmp/opr-poc1/client-$r/root/etc/examplepkg; done
-stable  stable
-rc      rc
-edge    edge
+$ bin/fakeroot-pacman edge -S --noconfirm examplepkg >/dev/null 2>&1
+$ cat /tmp/opr-poc1/client-edge/root/etc/examplepkg
+originated from edge, version 1.2
 $
 ```
 
@@ -191,12 +211,13 @@ bytes are not touched, and the client on rc now installs the very file that
 was built for edge, proving it is the same artifact and not a rebuild.
 
 ```console
-$ cp /tmp/opr-poc1/rings/edge.txt /tmp/opr-poc1/rings/rc.txt && bin/ring-publish rc
+$ cp /tmp/opr-poc1/rings/edge.txt /tmp/opr-poc1/rings/rc.txt
+$ bin/ring-publish rc
 $ bin/fakeroot-pacman rc -Syyu --noconfirm 2>&1 | grep -E '^(upgrading|:: Synchronizing)'
 :: Synchronizing package databases...
 upgrading examplepkg...
 $ cat /tmp/opr-poc1/client-rc/root/etc/examplepkg
-edge
+originated from edge, version 1.2
 $ ls /tmp/opr-poc1/repo/x86_64 | grep -c 'pkg.tar.zst$'
 3
 $
@@ -226,29 +247,11 @@ POC only has one package, so it is the same command as above; with many
 packages it is `sed -i 's/chromium-1.0-1/chromium-1.1-1/' rings/stable.txt`
 followed by `bin/ring-publish stable`.
 
-### 9. Signatures are load-bearing
-
-A database whose signature does not verify is rejected by the client, so a
-compromised or half-written publish cannot move a ring. Here the edge
-database is dropped in place of stable's without re-signing:
-
-```console
-$ cp /tmp/opr-poc1/repo/x86_64/omarchy-edge.db /tmp/opr-poc1/repo/x86_64/omarchy-stable.db
-$ bin/fakeroot-pacman stable -Syy 2>&1 | grep '^error'
-error: omarchy-stable: signature from "Omarchy POC <poc@omarchy.org>" is invalid
-error: failed to synchronize all databases (invalid or corrupted database (PGP signature))
-$ bin/ring-publish stable && bin/fakeroot-pacman stable -Syy 2>&1 | grep -c 'failed to synchronize'
-0
-$
-```
-
-(pacman also complains once about the tampered copy left in its local sync
-directory while it re-downloads; the sync itself succeeds.)
-
-### 10. Clean up
+### 9. Clean up
 
 ```console
 $ gpgconf --homedir /tmp/opr-poc1/keyring --kill gpg-agent; gpgconf --kill gpg-agent
+$ rm -rf /tmp/opr-poc1
 $
 ```
 
@@ -259,9 +262,8 @@ $
    list of pool filenames, the pacman database is generated from it, and git
    history of the list is the release history.
 2. **Can we generate valid, signed pacman databases from it?** Yes:
-   `repo-add --sign` over the pinned list produces the database, pacman with
-   `SigLevel = Required` verifies it, and a missing or bad signature stops
-   the sync (step 9).
+   `repo-add --sign` over the pinned list produces the database and pacman
+   with `SigLevel = Required` verifies it on every sync (steps 4 to 6).
 3. **Client control:** nothing here needs a new client. Stock pacman resolves
    rings purely from the database name, so the client work can stay a
    separate, later decision.
@@ -280,6 +282,11 @@ $
   layout; the layout does not force either choice.
 - **Per-package promotion.** Supported directly (step 8); a ring list is
   edited one line at a time and republished.
+- **No overwrites in the pool.** The immutability guarantee lives in the
+  ingest tool, not the layout. On R2 that means uploading with a
+  no-overwrite option (a conditional put or an ignore-existing sync), so a
+  rebuilt package with the same filename can never replace what a ring
+  already pins.
 - **Revisions before a larger deploy.** Retention and pruning of the pool
   are out of scope here and need their own design. Also worth confirming
   whether `.files` databases are wanted per ring (they double the publish

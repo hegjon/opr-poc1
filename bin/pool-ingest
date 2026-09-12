@@ -4,7 +4,7 @@
 # Re-ingesting an existing filename is refused: the pool is append-only.
 set -euo pipefail
 here=$(cd "$(dirname "$0")/.." && pwd)
-pool=${POOL:-/tmp/opr-poc1/repo}/x86_64
+pool=/tmp/opr-poc1/repo/x86_64
 export GNUPGHOME=/tmp/opr-poc1/gnupg
 mkdir -p "$pool"
 for p in "$@"; do

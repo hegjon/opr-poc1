@@ -1,13 +1,12 @@
 #!/bin/bash
 # Usage: bin/fakeroot-pacman RING PACMAN-ARGS...
-# Runs an unprivileged pacman against a throwaway root for the given ring.
-# Only the ring name differs between clients; the Server URL is the same pool.
+# Runs an unprivileged pacman against a throwaway root for the given ring,
+# using config/pacman-RING.conf.
 set -euo pipefail
 ring=$1; shift
 here=$(cd "$(dirname "$0")/.." && pwd)
 root=/tmp/opr-poc1/client-$ring
 mkdir -p "$root"/{db,cache,root,hooks}
-sed "s/@RING@/$ring/; s#@POOL@#${POOL:-/tmp/opr-poc1/repo}#" "$here/client/pacman.conf.in" > "$root/pacman.conf"
-exec fakeroot pacman --config "$root/pacman.conf" --root "$root/root" \
-  --dbpath "$root/db" --cachedir "$root/cache" --gpgdir "/tmp/opr-poc1/keyring" \
+exec fakeroot pacman --config "$here/config/pacman-$ring.conf" --root "$root/root" \
+  --dbpath "$root/db" --cachedir "$root/cache" --gpgdir /tmp/opr-poc1/keyring \
   --logfile "$root/pacman.log" --hookdir "$root/hooks" "$@"
