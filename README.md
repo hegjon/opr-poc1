@@ -54,6 +54,21 @@ config/pacman-RING.conf        the client config per ring; only the repo name di
 /tmp/opr-poc1/client-RING/     throwaway pacman root per ring
 ```
 
+The tooling is deliberately tiny. `bin/pool-ingest` and `bin/ring-publish`
+are concept scripts that work on local files; the real implementation needs
+the same two operations expressed against the R2 API. `bin/fakeroot-pacman`
+is only a wrapper so that stock pacman can be exercised in a throwaway client
+environment without root; it is not part of the design.
+
+```console
+$ wc -l bin/*
+  12 bin/fakeroot-pacman
+  13 bin/pool-ingest
+  13 bin/ring-publish
+  38 total
+$
+```
+
 ## Walkthrough
 
 ### 1. Start clean, create a signing key
