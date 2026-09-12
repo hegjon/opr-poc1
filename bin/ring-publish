@@ -10,4 +10,4 @@ pool=/tmp/opr-poc1/repo/x86_64
 db=$pool/omarchy-$ring.db.tar.gz
 rm -f "$db" "${db%.tar.gz}" "$db.sig" "${db%.db.tar.gz}".files*
 mapfile -t pkgs < <(sed "s|^|$pool/|" "/tmp/opr-poc1/rings/$ring.txt")
-repo-add --sign --key poc@omarchy.org "$db" "${pkgs[@]}" >/dev/null
+repo-add -q --sign --key poc@omarchy.org "$db" "${pkgs[@]}"
